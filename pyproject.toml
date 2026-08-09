@@ -22,11 +22,11 @@ members = ["packages/*"]
 
 [tool.uv.sources]
 led-ctrl-v3 = { workspace = true }
-lefx-device-respeaker = { workspace = true }
-lefx-device-simulated-respeaker = { workspace = true }
-lefx-effect-creation = { workspace = true }
-lefx-engine = { workspace = true }
-lefx-interfaces = { workspace = true }
-lefx-sdk = { workspace = true }
-lefxset-core-set = { workspace = true }
-lefxset-smartspeaker-set = { workspace = true }
+led-ctrl-v3-device-respeaker = { workspace = true }
+led-ctrl-v3-device-simulated-respeaker = { workspace = true }
+led-ctrl-v3-effect-creation = { workspace = true }
+led-ctrl-v3-engine = { workspace = true }
+led-ctrl-v3-interfaces = { workspace = true }
+led-ctrl-v3-sdk = { workspace = true }
+led-ctrl-v3-set-core = { workspace = true }
+led-ctrl-v3-set-smartspeaker = { workspace = true }
