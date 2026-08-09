@@ -9,7 +9,7 @@
 # no tooling. What is here is what gets published, and nothing else.
 [project]
 name = "led-ctrl-v3-release"
-version = "3.0.0"
+version = "3.0.1"
 description = "Release tree for the LEFX V3 distributions"
 requires-python = ">=3.12,<3.13"
 dependencies = []
@@ -22,11 +22,5 @@ members = ["packages/*"]
 
 [tool.uv.sources]
 led-ctrl-v3 = { workspace = true }
-led-ctrl-v3-device-respeaker = { workspace = true }
 led-ctrl-v3-device-simulated-respeaker = { workspace = true }
 led-ctrl-v3-effect-creation = { workspace = true }
-led-ctrl-v3-engine = { workspace = true }
-led-ctrl-v3-interfaces = { workspace = true }
-led-ctrl-v3-sdk = { workspace = true }
-led-ctrl-v3-set-core = { workspace = true }
-led-ctrl-v3-set-smartspeaker = { workspace = true }
