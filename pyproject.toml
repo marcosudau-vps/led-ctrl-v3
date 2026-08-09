@@ -8,8 +8,8 @@
 # There is nothing to develop in this tree: no test suite, no effect sources,
 # no tooling. What is here is what gets published, and nothing else.
 [project]
-name = "led-ctrl-v3-release"
-version = "3.0.1"
+name = "led-controller-version-3-release"
+version = "3.0.2"
 description = "Release tree for the LEFX V3 distributions"
 requires-python = ">=3.12,<3.13"
 dependencies = []
@@ -21,6 +21,6 @@ package = false
 members = ["packages/*"]
 
 [tool.uv.sources]
-led-ctrl-v3 = { workspace = true }
-led-ctrl-v3-device-simulated-respeaker = { workspace = true }
-led-ctrl-v3-effect-creation = { workspace = true }
+led-controller-version-3 = { workspace = true }
+led-controller-version-3-device-simulated-respeaker = { workspace = true }
+led-controller-version-3-effect-creation = { workspace = true }
