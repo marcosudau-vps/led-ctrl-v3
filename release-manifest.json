@@ -1,0 +1,34 @@
+{
+  "version": "3.0.4",
+  "commit": "5aabd0639aad6c12cdba2bf1b427691d6026b771",
+  "files": {
+    "led_controller_version_3-3.0.4-py3-none-any.whl": {
+      "size": 212422,
+      "sha256": "95c31ecc7e6b87b4dd3f0126cb5b1aaad1a07fb32753deebc83fb9593eea4ecb"
+    },
+    "led_controller_version_3-3.0.4.tar.gz": {
+      "size": 188655,
+      "sha256": "84b39a2b503446f388f2e66c11da5007ae3f590beb0a6c2d3b2ce83cc06bf5b3"
+    },
+    "led_controller_version_3_device_simulated_respeaker-3.0.4-py3-none-any.whl": {
+      "size": 23841,
+      "sha256": "eec0508e2e3daeff19f59cbd0cdde5b7e002ac1240ae1fac89484fa646046989"
+    },
+    "led_controller_version_3_device_simulated_respeaker-3.0.4.tar.gz": {
+      "size": 18040,
+      "sha256": "bba5e732f486ee64e66b5470468858c1221232bb3eb28a793a72570d19c3edc6"
+    },
+    "led_controller_version_3_effect_creation-3.0.4-py3-none-any.whl": {
+      "size": 133611,
+      "sha256": "7529f2dfa8dc217d0a767e8be1146f176bea739fdb3c93e9e7aa5fbe8292d632"
+    },
+    "led_controller_version_3_effect_creation-3.0.4.tar.gz": {
+      "size": 110930,
+      "sha256": "53b25a907c0d85a135118ec182cf752633cddb0be7cf8b4aec48260bee437fb9"
+    }
+  },
+  "tree": {
+    "size": 335780,
+    "sha256": "c004be902d712c46760f45ba928e723d3edc264b4786797f621844424375c834"
+  }
+}

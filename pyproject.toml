@@ -9,7 +9,7 @@
 # no tooling. What is here is what gets published, and nothing else.
 [project]
 name = "led-controller-version-3-release"
-version = "3.0.3"
+version = "3.0.4"
 description = "Release tree for the LEFX V3 distributions"
 requires-python = ">=3.12,<3.13"
 dependencies = []

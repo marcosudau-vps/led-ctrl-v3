@@ -28,6 +28,8 @@ from .project import Project
 logger = logging.getLogger("lefx.effect_creation.studio.session")
 
 FrameListener = Callable[[tuple[int, ...]], None]
+RebuildListener = Callable[[str], None]
+"""Called with ``"before"`` and ``"after"`` around a reload or a reopen."""
 
 NULL_OUTPUT = "null"
 STUDIO_CHANNEL = "studio"
@@ -100,35 +102,49 @@ def device_in_use() -> str | None:
     return f"a lefx service is running on {info.host}:{info.port} (pid {info.pid})"
 
 
-WINDOWS_INVALID_PARAMETER = 87
-"""What Windows answers when asked about a pid that does not exist."""
+def _windows_process_alive(pid: int) -> bool:
+    """Query an owned handle; never send a signal to the process."""
+    import ctypes
+    from ctypes import wintypes
+
+    if pid > 0xFFFFFFFF:
+        return False
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    open_process = kernel.OpenProcess
+    open_process.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    open_process.restype = wintypes.HANDLE
+    wait = kernel.WaitForSingleObject
+    wait.argtypes = (wintypes.HANDLE, wintypes.DWORD)
+    wait.restype = wintypes.DWORD
+    close = kernel.CloseHandle
+    close.argtypes = (wintypes.HANDLE,)
+    close.restype = wintypes.BOOL
+    handle = open_process(0x00100000, False, pid)  # SYNCHRONIZE only
+    if not handle:
+        # ERROR_INVALID_PARAMETER: no such PID. Access denied and other
+        # uncertain errors are conservatively considered alive.
+        return ctypes.get_last_error() != 87
+    try:
+        # WAIT_OBJECT_0 means exited; WAIT_TIMEOUT means still running.
+        # Treat other/failed results as alive rather than take a device.
+        return wait(handle, 0) != 0
+    finally:
+        close(handle)
 
 
 def _process_alive(pid: int) -> bool:
-    """Whether the instance file describes something still running.
-
-    A service killed rather than stopped leaves its file behind, and refusing to
-    start because of a note from a process that no longer exists would be a
-    worse failure than the one being prevented.
-
-    The three outcomes are the same everywhere but spelled differently. POSIX
-    raises :class:`ProcessLookupError` for a pid that is gone; Windows raises a
-    plain :class:`OSError` carrying ``winerror`` 87, which is not distinguishable
-    from a real failure by type alone. Anything else that goes wrong is treated
-    as "alive", because refusing to open a device is the recoverable mistake and
-    taking one out from under a running service is not.
-    """
+    """Check liveness without affecting another process on either platform."""
     if pid <= 0:
         return False
+    if os.name == "nt":
+        return _windows_process_alive(pid)
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
         return False
-    except PermissionError:
-        # Someone else's process, but a process.
+    except OSError:
+        # Permission failures and uncertainty must not allow device takeover.
         return True
-    except OSError as exc:
-        return getattr(exc, "winerror", None) != WINDOWS_INVALID_PARAMETER
     return True
 
 
@@ -161,6 +177,35 @@ class StudioSession:
         self.output_name = NULL_OUTPUT
         self.device_options: dict[str, Any] = {}
         self._listener: FrameListener | None = None
+        self._rebuild_listeners: list[RebuildListener] = []
+
+    # -- rebuilds -----------------------------------------------------------
+
+    def watch_rebuilds(self, listener: RebuildListener) -> Callable[[], None]:
+        """Be told before and after the registry or the whole service is replaced.
+
+        Something that put a definition of its own into the registry — the
+        Lab's live feed — loses it on every reload and every reopen, while the
+        engine's render thread keeps running. Learning about it on the next
+        frame is too late when no next frame comes: a paused preview sends
+        none. ``"before"`` is the moment to take such a state off its layer,
+        ``"after"`` the moment to put it back. ``"after"`` is sent even when the
+        rebuild failed. Returns the function that stops the watching.
+        """
+        self._rebuild_listeners.append(listener)
+
+        def unwatch() -> None:
+            if listener in self._rebuild_listeners:
+                self._rebuild_listeners.remove(listener)
+
+        return unwatch
+
+    def _tell(self, phase: str) -> None:
+        for listener in list(self._rebuild_listeners):
+            try:
+                listener(phase)
+            except Exception:
+                logger.exception("rebuild listener failed (%s)", phase)
 
     # -- the output ---------------------------------------------------------
 
@@ -185,6 +230,13 @@ class StudioSession:
         USB endpoint or a listening socket, and building the next one before
         letting go would have them contend for it.
         """
+        self._tell("before")
+        try:
+            return self._open(output, **device_options)
+        finally:
+            self._tell("after")
+
+    def _open(self, output: str, **device_options: Any) -> ControllerService:
         self.close()
 
         sink: FrameSink
@@ -245,7 +297,11 @@ class StudioSession:
     def reload_sources(self) -> dict[str, Any]:
         if self.service is None:
             raise RuntimeError("no output is open")
-        return self.service.reload_sources()
+        self._tell("before")
+        try:
+            return self.service.reload_sources()
+        finally:
+            self._tell("after")
 
     def status(self) -> dict[str, Any]:
         return {} if self.service is None else self.service.status()
@@ -300,6 +356,7 @@ __all__ = [
     "STUDIO_CHANNEL",
     "FrameListener",
     "Project",
+    "RebuildListener",
     "StudioSession",
     "TappedSink",
     "available_outputs",
