@@ -8,25 +8,12 @@
 # A tag in the release repository is set by the sync workflow and by nothing
 # else, which is what makes "tagged here" mean "checked over there".
 name: Release
-run-name: ${{ github.ref == 'refs/heads/main' && format('Recovery {0} ({1})', inputs.recovery_tag, inputs.publish_recovery && 'publish' || 'verify only') || github.ref_name }}
 
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
-    inputs:
-      recovery_tag:
-        description: Exact existing tag for recovery from main
-        type: string
-      publish_recovery:
-        description: Publish the verified original v3.0.5 distributions
-        type: boolean
-        default: false
-
-concurrency:
-  group: mirror-release
-  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -41,12 +28,7 @@ jobs:
     # Belt and braces. A fork of this repository that inherited the workflow
     # would otherwise try to publish to the real project names on the real
     # index, and the failure would be a confusing 403 rather than a skip.
-    if: >-
-      github.repository == 'marcosudau-vps/led-ctrl-v3' &&
-      (startsWith(github.ref, 'refs/tags/v') ||
-       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.recovery_tag == 'v3.0.5'))
-    env:
-      TAG_REF: ${{ github.ref == 'refs/heads/main' && 'refs/tags/v3.0.5' || github.ref }}
+    if: github.repository == 'marcosudau-vps/led-ctrl-v3' && startsWith(github.ref, 'refs/tags/v')
     outputs:
       version: ${{ steps.version.outputs.version }}
       matrix: ${{ steps.contract.outputs.matrix }}
@@ -60,65 +42,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Verify original tag objects, CI run and manifest for v3.0.5
-        if: github.ref == 'refs/heads/main'
-        shell: bash
-        env:
-          DEV_REPO: marcosudau-vps/led_controller_respeaker-v3
-          DEV_TAG_OBJECT: 576a86e98caa302ffde5ad28c8f1663a9626a473
-          DEV_COMMIT: 6bfca277079d5e957811405ef5cbff25f9c71ad8
-          DEV_BASE: 36c20d5f4d4d1585c734888a581634357cca7233
-          ORIGINAL_RUN: "45918385311"
-          ORIGINAL_ARTIFACT: "15162824543"
-          ORIGINAL_ZIP_SHA: fe18cab614f934d63204a6d94e509e3d2e44286ec06bce71d0069a090403569b
-          MANIFEST_SHA: f1e0bc5f76ebde618f71377c69793ee9892f9c28695dbb9bf07caab7bedf0e86
-          MIRROR_TAG_OBJECT: 5e4008dd64efbce209c54505d11c3597ecfce697
-          MIRROR_COMMIT: f1f6931628f39cb2031c85d1664b1d1e7b785755
-        run: |
-          set -euo pipefail
-
-          git fetch --no-tags --refmap= "https://github.com/$DEV_REPO.git" "$TAG_REF"
-          test "$(git rev-parse --verify 'FETCH_HEAD^{tag}')" = "$DEV_TAG_OBJECT"
-          test "$(git rev-parse 'FETCH_HEAD^{commit}')" = "$DEV_COMMIT"
-          test "$(git cat-file tag "$DEV_TAG_OBJECT" | sed -n 's/^Release run: //p')" = "$ORIGINAL_RUN"
-
-          git fetch --no-tags --refmap= origin "$TAG_REF"
-          test "$(git rev-parse --verify 'FETCH_HEAD^{tag}')" = "$MIRROR_TAG_OBJECT"
-          test "$(git rev-parse 'FETCH_HEAD^{commit}')" = "$MIRROR_COMMIT"
-          test "$(git cat-file tag "$MIRROR_TAG_OBJECT" | sed -n 's/^Development commit: //p')" = "$DEV_COMMIT"
-          git checkout --detach "$MIRROR_COMMIT"
-          printf '%s  release-manifest.json\n' "$MANIFEST_SHA" | sha256sum --check --strict
-
-          api="https://api.github.com/repos/$DEV_REPO/actions"
-          github_get() { curl --fail-with-body --silent --show-error --retry 3 --max-time 30 "$1"; }
-          github_get "$api/runs/$ORIGINAL_RUN" | jq -e --arg id "$ORIGINAL_RUN" --arg base "$DEV_BASE" '
-            (.id | tostring) == $id and .path == ".github/workflows/patch-release.yml" and
-            .event == "workflow_dispatch" and .head_branch == "main" and .head_sha == $base and
-            .status == "completed"'
-          github_get "$api/runs/$ORIGINAL_RUN/jobs?per_page=100" | jq -e '
-            [.jobs[] | select(.conclusion == "success") | .name] as $passed |
-            ([
-              "Select next patch and create immutable candidate",
-              "Test and build exact release candidate / Build, test and package",
-              "Test and build exact release candidate / Build and verify Windows Studio executable",
-              "Verify all artifacts, tag, publish and mirror"
-            ] - $passed) == []'
-          github_get "$api/artifacts/$ORIGINAL_ARTIFACT" | jq -e \
-            --arg artifact "$ORIGINAL_ARTIFACT" --arg run "$ORIGINAL_RUN" \
-            --arg base "$DEV_BASE" --arg digest "sha256:$ORIGINAL_ZIP_SHA" '
-            (.id | tostring) == $artifact and .name == "release-pypi" and .digest == $digest and
-            .expired == false and (.workflow_run.id | tostring) == $run and .workflow_run.head_sha == $base'
-          {
-            echo "## Recovery of $TAG_REF"
-            echo "- Development tag object: $DEV_TAG_OBJECT"
-            echo "- Development commit: $DEV_COMMIT"
-            echo "- Mirror tag object: $MIRROR_TAG_OBJECT"
-            echo "- Mirror commit: $MIRROR_COMMIT"
-            echo "- Original CI run: $ORIGINAL_RUN"
-            echo "- Original CI artifact: $ORIGINAL_ARTIFACT (SHA-256 $ORIGINAL_ZIP_SHA)"
-            echo "- Original manifest SHA-256: $MANIFEST_SHA"
-          } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Read the version out of the tree
         id: version
         run: |
@@ -127,8 +50,9 @@ jobs:
           echo "release tree is at $version"
 
       - name: The tag has to name the version in the tree
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          tag="${TAG_REF#refs/tags/v}"
+          tag="${GITHUB_REF#refs/tags/v}"
           if [ "$tag" != "${{ steps.version.outputs.version }}" ]; then
             echo "tag v$tag does not match tree version ${{ steps.version.outputs.version }}" >&2
             exit 1
@@ -140,7 +64,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           # checkout may point the local tag ref directly at the peeled commit.
-          git fetch --no-tags --refmap= origin "$TAG_REF"
+          git fetch --no-tags --refmap= origin "$GITHUB_REF"
           tag_object=$(git rev-parse --verify 'FETCH_HEAD^{tag}')
           test "$(git rev-parse "${tag_object}^{commit}")" = "$(git rev-parse HEAD)"
           commit=$(git cat-file tag "$tag_object" | sed -n 's/^Development commit: //p')
@@ -148,44 +72,7 @@ jobs:
           python scripts/release_bundle.py fetch release-manifest.json dist --version "$VERSION" --commit "$commit"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
-      - name: Check existing PyPI files before recovery
-        if: github.ref == 'refs/heads/main'
-        run: |
-          PYTHONPATH=scripts python - <<'PY'
-          import json
-          from pathlib import Path
-          from urllib.error import HTTPError
-          from urllib.request import Request, urlopen
-
-          from release_bundle import load_manifest
-          from release_contract import release_projects
-
-          version = "3.0.5"
-          commit = "6bfca277079d5e957811405ef5cbff25f9c71ad8"
-          manifest = load_manifest(Path("release-manifest.json"), version, commit)
-          for project in release_projects(version, commit):
-              url = f"https://pypi.org/pypi/{project.name}/{version}/json"
-              try:
-                  with urlopen(Request(url, headers={"Cache-Control": "no-cache"}), timeout=30) as response:
-                      files = json.load(response)["urls"]
-              except HTTPError as exc:
-                  if exc.code != 404:
-                      raise
-                  files = []
-              allowed = {project.wheel(version), project.sdist(version)}
-              for item in files:
-                  name = item["filename"]
-                  if name not in allowed:
-                      raise SystemExit(f"Unexpected PyPI file: {name}")
-                  allowed.remove(name)
-                  record = {"size": item["size"], "sha256": item["digests"]["sha256"]}
-                  if item["yanked"] or record != manifest["files"][name]:
-                      raise SystemExit(f"PyPI file differs from original CI: {name}")
-              print(f"{project.name}: {len(files)} existing file(s) match original CI")
-          PY
-
       - uses: actions/upload-artifact@v4
-        if: github.ref != 'refs/heads/main' || inputs.publish_recovery
         with:
           name: distributions
           path: dist/
@@ -195,10 +82,7 @@ jobs:
   publish:
     name: ${{ matrix.distribution }} to PyPI
     needs: build
-    if: >-
-      startsWith(github.ref, 'refs/tags/v') ||
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
-       inputs.recovery_tag == 'v3.0.5' && inputs.publish_recovery)
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     # One environment per project, and each project's trusted publisher on PyPI
     # names its own. That is not tidiness: PyPI refuses a second *pending*
