@@ -1,34 +1,42 @@
 {
-  "version": "3.0.4",
-  "commit": "5aabd0639aad6c12cdba2bf1b427691d6026b771",
+  "version": "3.0.5",
+  "commit": "6bfca277079d5e957811405ef5cbff25f9c71ad8",
   "files": {
-    "led_controller_version_3-3.0.4-py3-none-any.whl": {
-      "size": 212422,
-      "sha256": "95c31ecc7e6b87b4dd3f0126cb5b1aaad1a07fb32753deebc83fb9593eea4ecb"
+    "led_controller_version_3-3.0.5-py3-none-any.whl": {
+      "size": 212483,
+      "sha256": "05e950cfc6f805df7b1dac2444205e97bb899bc38fa2d674815db68696f51fd9"
     },
-    "led_controller_version_3-3.0.4.tar.gz": {
-      "size": 188655,
-      "sha256": "84b39a2b503446f388f2e66c11da5007ae3f590beb0a6c2d3b2ce83cc06bf5b3"
+    "led_controller_version_3-3.0.5.tar.gz": {
+      "size": 188709,
+      "sha256": "aabdf99e8b2ec078d5fdd7c7c96b7b312fd3bfa627d5a727843114516828ffbf"
     },
-    "led_controller_version_3_device_simulated_respeaker-3.0.4-py3-none-any.whl": {
+    "led_controller_version_3_device_simulated_respeaker-3.0.5-py3-none-any.whl": {
       "size": 23841,
-      "sha256": "eec0508e2e3daeff19f59cbd0cdde5b7e002ac1240ae1fac89484fa646046989"
+      "sha256": "4c46b746c244d2b0746fa70d150608f635c4ca46b8da67267cdf30bc3e3ac122"
     },
-    "led_controller_version_3_device_simulated_respeaker-3.0.4.tar.gz": {
-      "size": 18040,
-      "sha256": "bba5e732f486ee64e66b5470468858c1221232bb3eb28a793a72570d19c3edc6"
+    "led_controller_version_3_device_simulated_respeaker-3.0.5.tar.gz": {
+      "size": 18039,
+      "sha256": "5095f7c2ee82149ea8776fcd06ef8cf121673f6f296e33e8af471d2ae447e688"
     },
-    "led_controller_version_3_effect_creation-3.0.4-py3-none-any.whl": {
-      "size": 133611,
-      "sha256": "7529f2dfa8dc217d0a767e8be1146f176bea739fdb3c93e9e7aa5fbe8292d632"
+    "led_controller_version_3_effect_creation-3.0.5-py3-none-any.whl": {
+      "size": 133610,
+      "sha256": "499c3de9127b9a36cfdeb8f4b79edc1a5f6bc70e965d23bffb286f4f65f4f29d"
     },
-    "led_controller_version_3_effect_creation-3.0.4.tar.gz": {
+    "led_controller_version_3_effect_creation-3.0.5.tar.gz": {
       "size": 110930,
-      "sha256": "53b25a907c0d85a135118ec182cf752633cddb0be7cf8b4aec48260bee437fb9"
+      "sha256": "511794a915fa0a3105af261b2d8a70551e790c10d56c9ef2b2ff85ef5396da68"
+    },
+    "lefx_config_widget-3.0.5-py3-none-any.whl": {
+      "size": 52932,
+      "sha256": "b3c2ae84180af05da940b6c993e71beea8a107836d60818f9fdd9e8921314784"
+    },
+    "lefx_config_widget-3.0.5.tar.gz": {
+      "size": 58065,
+      "sha256": "0821ef5293c820ac62f51b2c5139134a7abcc3b3e7261a18d64e15cb5dd4266a"
     }
   },
   "tree": {
-    "size": 335780,
-    "sha256": "c004be902d712c46760f45ba928e723d3edc264b4786797f621844424375c834"
+    "size": 394725,
+    "sha256": "85836ca01c4861d1651b2cc12aa1af1759af1416b932241e6daec1ed3bcd1dcb"
   }
 }

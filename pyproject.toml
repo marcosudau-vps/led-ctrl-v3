@@ -9,7 +9,7 @@
 # no tooling. What is here is what gets published, and nothing else.
 [project]
 name = "led-controller-version-3-release"
-version = "3.0.4"
+version = "3.0.5"
 description = "Release tree for the LEFX V3 distributions"
 requires-python = ">=3.12,<3.13"
 dependencies = []
@@ -24,3 +24,4 @@ members = ["packages/*"]
 led-controller-version-3 = { workspace = true }
 led-controller-version-3-device-simulated-respeaker = { workspace = true }
 led-controller-version-3-effect-creation = { workspace = true }
+lefx-config-widget = { workspace = true }
